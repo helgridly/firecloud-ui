@@ -25,32 +25,22 @@ You will need to create a Google web application client ID from here:
 
 https://console.developers.google.com/
 
-You can create credentials for yourself in **"APIs & Auth" -> "Credentials."** You want an **OAuth 2.0 client ID** with a **Web application** application type. For more details, see Google's help page:
+This should include your docker host as an authorized JavaScript origin. By convention, we use `dhost` as the hostname, which requires an addition to your /etc/hosts file, e.g.,
 
-https://developers.google.com/identity/sign-in/web/devconsole-project
-
-Add your docker host as an authorized JavaScript origin. By convention, we use `dhost` as the hostname, so we add the following origins:
-- https://dhost
-- http://dhost
-
-The HTTP (vs. HTTPS) origin is necessary for hot-reloading during local development since Figwheel does not support HTTPS.
-
-To use this host, you'll need to add your docker machine's IP address (the address returned by `docker-machine ip default`) to your `/etc/hosts` file, e.g.,
 ```
 192.168.99.100 dhost
 ```
 
+The IP address is returned by `docker-machine ip default`.
+
 Set your client ID in your environment:
+
 ```
 export GOOGLE_CLIENT_ID='...'
 ```
 
-Optionally, override the FireCloud Orchestration URL (see default in start-server.sh):
-```
-export ORCH_URL_ROOT='http://orch:8080'
-```
-
 Start the server in docker:
+
 ```
 ./script/dev/start-server.sh
 ```
@@ -59,9 +49,8 @@ Build the code:
 
 ```
 docker exec -it firecloud-ui ./script/dev/build-once.sh
-```
 
-You should now be able to view the application at `http://dhost/` or `https://dhost/`.
+```
 
 ## Build Options
 
@@ -80,11 +69,9 @@ Watch files, rebuild, and reload changes into the running browser window:
 docker exec -it firecloud-ui ./script/dev/start-hot-reloader.sh
 ```
 
-For this build, you must be viewing the application via HTTP, not HTTPS. HTTPS is not supported by Figwheel.
-
 This can take around 20 seconds to completely start. When ready, it will display the following message:
 ```
 Prompt will show when figwheel connects to your application
 ```
 
-To connect, reload the browser window. The prompt should appear less than ten seconds after you reload the page. If it is not connecting, make sure to check the JavaScript console for error messages.
+To connect, reload the browser window (see the Running section below).
