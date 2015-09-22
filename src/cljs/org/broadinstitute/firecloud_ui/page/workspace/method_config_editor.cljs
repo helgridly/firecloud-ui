@@ -8,7 +8,7 @@
     [org.broadinstitute.firecloud-ui.common.style :as style]
     [org.broadinstitute.firecloud-ui.endpoints :as endpoints]
     [org.broadinstitute.firecloud-ui.page.workspace.launch-analysis :as launch]
-    ))
+    [org.broadinstitute.firecloud-ui.nav :as nav]))
 
 
 (defn- capture-prerequisites [state refs]
@@ -100,6 +100,62 @@
                                               (swap! state assoc :deleting? true)
                                               (react/call :rm-mc this))}])})
 
+(defn- clear-overlay [state refs]
+       (swap! state assoc :publishing? false))
+
+(defn- render-modal-publish [state refs props]
+       (react/create-element
+         [:div {}
+          [:div {:style {:backgroundColor "#fff"
+                         :borderBottom (str "1px solid " (:line-gray style/colors))
+                         :padding "20px 48px 18px"
+                         :fontSize "137%" :fontWeight 400 :lineHeight 1}}
+           "Publish Method Configuration"]
+          [:div {:style {:padding "22px 48px 40px" :backgroundColor (:background-gray style/colors)}}
+           (style/create-form-label "Method Configuration Namespace")
+           (style/create-text-field {:style {:width "100%"} :ref "mcNamespace"
+                                     :defaultValue (get-in (:config props) ["namespace"])})
+           (style/create-form-label "Method Configuration Name")
+           (style/create-text-field {:style {:width "100%"} :ref "mcName"
+                                     :defaultValue (get-in (:config props) ["name"])})
+           [:div {:style {:marginTop 40 :textAlign "center"}}
+            [:a {:style {:marginRight 27 :marginTop 2 :padding "0.5em"
+                         :display "inline-block"
+                         :fontSize "106%" :fontWeight 500 :textDecoration "none"
+                         :color (:button-blue style/colors)}
+                 :href "javascript:;"
+                 :onClick #(clear-overlay state refs)
+                 :onKeyDown (common/create-key-handler [:space :enter] #(clear-overlay state refs))}
+             "Cancel"]
+            (when (:creating-wf @state)
+                  [comps/Blocker {:banner "Publishing Method Configuration..."}])
+            [comps/Button {:text "Publish" :ref "publishButton"
+                           :onClick
+                                 #(let [ns (-> (@refs "mcNamespace") .getDOMNode .-value clojure.string/trim)
+                                        n (-> (@refs "mcName") .getDOMNode .-value clojure.string/trim)]
+                                       (when-not (or (empty? ns) (empty? n))
+                                                 (swap! state assoc :creating-wf true)
+                                                 (endpoints/call-ajax-orch
+                                                   {:endpoint (endpoints/copy-method-config-to-repo (:workspace-id props) (:config props))
+                                                    :payload  {:repoNamespace ns :repoName n}
+                                                    :on-done  (fn [{:keys [success?]}]
+                                                                  (swap! state dissoc :creating-wf)
+                                                                  (if success?
+                                                                    (do (clear-overlay state refs))
+                                                                    (js/alert "Method Configuration Publish Failed.")))})))}]]]]))
+
+(react/defc PublishButton
+  {:render (fn [{:keys [props state refs]}]
+             [:div ()
+              (when (:publishing? @state)
+                [comps/Dialog
+                 {:width 500
+                  :dismiss-self #(swap! state dissoc :overlay-shown?)
+                  :content (render-modal-publish state refs props)}])
+              [comps/SidebarButton {:style   :light :color :button-blue :margin :top
+                                    :text    "Publish" :icon :share
+                                    :onClick #(swap! state assoc :publishing? true)}]])})
+
 
 (defn- render-side-bar [state refs config editing? props]
   [:div {:style {:width 290 :float "left"}}
@@ -118,6 +174,13 @@
          {:workspace-id (:workspace-id props)
           :on-rm (:on-rm props)
           :config config}])
+
+      (when-not editing?
+                [PublishButton
+                 {:workspace-id (:workspace-id props)
+                  :on-publish (:on-publish props)
+                  :config config}])
+
       (when editing?
         [comps/SidebarButton {:color :success-green
                               :text "Save" :icon :status-done
@@ -237,3 +300,4 @@
    :component-will-unmount
    (fn [{:keys [this]}]
      (.removeEventListener js/window "scroll" (.-onScrollHandler this)))})
+
