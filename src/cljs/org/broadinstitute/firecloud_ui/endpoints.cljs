@@ -282,5 +282,5 @@
 
 (defn copy-method-config-to-repo [workspace-id config]
       {:path (str "/workspaces/" (ws-path workspace-id)
-                  "/method_configs/" (config "namespace") "/" (config "name") "/copyToMethodRepo")
+                  "/method_configs/copyToMethodRepo")
        :method :post})

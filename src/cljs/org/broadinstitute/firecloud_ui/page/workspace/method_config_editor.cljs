@@ -137,7 +137,11 @@
                                                  (swap! state assoc :creating-wf true)
                                                  (endpoints/call-ajax-orch
                                                    {:endpoint (endpoints/copy-method-config-to-repo (:workspace-id props) (:config props))
-                                                    :payload  {:repoNamespace ns :repoName n}
+                                                    :headers {"Content-Type" "application/json"}
+                                                    :payload  {:configurationNamespace ns,
+                                                               :configurationName n,
+                                                               :sourceNamespace (get-in (:config props) ["namespace"]),
+                                                               :sourceName (get-in (:config props) ["name"])}
                                                     :on-done  (fn [{:keys [success?]}]
                                                                   (swap! state dissoc :creating-wf)
                                                                   (if success?
