@@ -105,7 +105,7 @@
                                                 new-val-is-public (= "public" new-val)]
                                             (when new-val-is-public
                                               (do
-                                                (js/alert "Cannot set value to 'public'!")
+                                                (js/alert "Cannot set value to 'public'!  Use the check-box for that")
                                                 (set! (-> e .-target .-value) "")))))
                               :defaultValue (acl-entry "user")})
                            (style/create-select
