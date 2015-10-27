@@ -287,19 +287,25 @@
        (:error-message @state) (style/create-server-error-message (:error-message @state))
        :else [comps/Spinner {:text "Loading..."}]))
    :reload-entities
-   (fn [{:keys [state this]}]
+   (fn [{:keys [state props]}]
      (swap! state dissoc :blocking-text :selected-method :selected-config :methods-list :configs-list)
      (endpoints/call-ajax-orch
        {:endpoint endpoints/list-configurations
         :on-done (fn [{:keys [success? get-parsed-response status-text]}]
                    (if success?
-                     (swap! state assoc :configs-list (map #(assoc % :type :config) (get-parsed-response)))
+                     (do
+                       (swap! state assoc :configs-list (map #(assoc % :type :config) (get-parsed-response)))
+                       (when-not (nil? (:on-load-configs props))
+                         ((:on-load-configs props) (:configs-list @state))))
                      (swap! state assoc :error-message status-text)))})
      (endpoints/call-ajax-orch
        {:endpoint endpoints/list-methods
         :on-done (fn [{:keys [success? get-parsed-response status-text]}]
                    (if success?
-                     (swap! state assoc :methods-list (map #(assoc % :type :method) (get-parsed-response)))
+                     (do
+                       (swap! state assoc :methods-list (map #(assoc % :type :method) (get-parsed-response)))
+                       (when-not (nil? (:on-load-methods props))
+                         ((:on-load-methods props) (:methods-list @state))))
                      (swap! state assoc :error-message status-text)))}))
    :component-did-mount
    (fn [{:keys [state this]}]

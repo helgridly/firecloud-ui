@@ -473,6 +473,23 @@
                 (range (inc (rand-int 5))))})
 
 
+(defn get-agora-ns-acl [is-config? ns]
+  {:path (str "/"
+           (if is-config? "configurations" "methods")
+           "/" ns "/permissions")
+   :method :get
+   :mock-data (map (fn [i] {:user (str "user" i "@broadinstitute.org")
+                            :role (rand-nth ["WRITER" "OWNER" "NO ACCESS"])})
+                (range (inc (rand-int 5))))})
+
+(defn persist-agora-ns-acl [is-config? ns user-perm-map]
+  {:path (str "/"
+           (if is-config? "configurations" "methods")
+           "/" ns "/permissions")
+   :method :post
+   :mock-data {:user "a@b.c" :role "OWNER"}})
+
+
 (defn delete-agora-entity [config? ns n sid]
   {:path (let [base (if config? "configurations" "methods")]
            (str "/" base "/" ns "/" n "/" sid))
