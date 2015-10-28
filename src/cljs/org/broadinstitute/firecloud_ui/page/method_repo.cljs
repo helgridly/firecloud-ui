@@ -21,28 +21,14 @@
         [:div {:style {:float "right"}}
          [comps/Button
           {:text "Namespace Permissions..."
-           :onClick #(swap! state assoc :show-ns-acl true)
-           ;#(js/alert "you clicked it!")
-
-
-           }]])
+           :onClick #(swap! state assoc :show-ns-acl true)}]])
       (common/clear-both)
       (when (:show-ns-acl @state)
-
-         (let [get-ns-func (fn [e] (get e "namespace"))]
-
-
-         [nsacls/AgoraNSPermsEditor
-         {:dismiss-self #(swap! state dissoc :show-ns-acl)
-          :methods-ns-list (distinct (map get-ns-func (:methods @state)))
-          :configs-ns-list (distinct (map get-ns-func (:configs @state)))
-
-
-
-          }
-
-         ])
-        )
+        (let [get-ns-func (fn [e] (get e "namespace"))]
+          [nsacls/AgoraNSPermsEditor
+           {:dismiss-self #(swap! state dissoc :show-ns-acl)
+            :methods-ns-list (distinct (map get-ns-func (:methods @state)))
+            :configs-ns-list (distinct (map get-ns-func (:configs @state)))}]))
       [MethodConfigImporter {:on-load-methods (fn [methods]
                                                 (utils/rlog (str "setting methods"))
                                                 (swap! state assoc :methods methods))
