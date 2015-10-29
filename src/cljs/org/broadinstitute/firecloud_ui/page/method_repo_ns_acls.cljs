@@ -125,31 +125,11 @@
                                  (:status-text @state)]
                                 (create-ns-acl-gui state props this))
                               ]
-
-
                   :show-cancel? true
                   :ok-button [comps/Button {:text "Save"
                                             :onClick (fn []
                                                        (let [ui-state (react/call :capture-ui-state this)]
-                                                         (utils/rlog (str "the captured state is " ui-state))
-                                                         )
-
-
-                                                       )
-
-
-                                                       }
-
-                              ]
-
-
-                  }
-
-                 ])
-
-
-
-       }])
+                                                         (utils/rlog (str "the captured state is " ui-state))))}]}])}])
    :capture-ui-state
    (fn [{:keys [state refs]}]
      (mapv
