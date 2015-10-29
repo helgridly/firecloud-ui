@@ -41,19 +41,7 @@
     {:text "Add new" :style :add
      :onClick #(swap! state assoc
                 :acl-vec (flatten [(:acl-vec @state)
-                                   {"user" "" "role" "WRITER"}]))}]
-   [:div {:style {:textAlign "center" :marginTop "1em"}}
-    [:a {:href "javascript:;"
-         :style {:textDecoration "none"
-                 :color (:button-blue style/colors)
-                 :marginRight "1.5em"}
-         :onClick #((:dismiss-self props))}
-     "Cancel"]
-    [comps/Button {:text "Save"
-                   :onClick #(do
-                              (let [ui-state (react/call :capture-ui-state this)]
-                                (utils/rlog (str "capture ui-state
-                                 that needs to be saved is " ui-state))))}]]])
+                                   {"user" "" "role" "WRITER"}]))}]])
 
 
 
@@ -90,53 +78,83 @@
       {:width "75%"
        :blocking? true
        :dismiss-self (:dismiss-self props)
-       :content (react/create-element
-                  [:div {:style {:background "#fff" :padding "2em"}}
-                   (when (:blocking-text @state)
-                     [comps/Blocker {:banner (:blocking-text @state)}])
-                   [comps/XButton {:dismiss (:dismiss-self props)}]
-                   (if
-                     (and
-                       (== (count (:methods-ns-list props)) 0)
-                       (== (count (:configs-ns-list props)) 0))
-                     [:div {} "There are no namespaces!"]
-                     [:div {}
-                      "Setting Namespace permissions for: "
-                      (cond (and
-                              (> (count (:methods-ns-list props)) 0)
-                              (> (count (:configs-ns-list props)) 0))
-                            [:div {}
-                             [:input {:onClick #(swap! state assoc
-                                                 :selected-type "methods"
-                                                 :selected-ns-list (:methods-ns-list props))
-                                  :checked (== 0 (compare "methods" (:selected-type @state)))
-                                  :class "ns-perms" :type "radio"} "Methods"]
-                             [:input {:checked (== 0 (compare "configs" (:selected-type @state)))
-                                      :onClick #(swap! state assoc
-                                                 :selected-type "configs"
-                                                 :selected-ns-list (:configs-ns-list props))
-                                  :class "ns-perms" :type "radio"} "Configurations"]]
-                            (> (count (:methods-ns-list props)) 0) "Methods"
-                            (> (count (:configs-ns-list props)) 0) "Configurations")])
-                   [:br]
-                   "Select a Namespace: "
-                   (style/create-select
-                     {:onChange (fn [e]
-                                  (let [index (int (-> e .-target .-value))
-                                        selected-ns-str (nth (:selected-ns-list @state) index)]
-                                    (swap! state assoc :selected-ns selected-ns-str)
-                                    (react/call :load-in-acl this)))
-                      :defaultValue (:selected-ns @state)}
-                     (:selected-ns-list @state))
-                   (if (:status-text @state)
-                     [:div {:style {:color (:exception-red style/colors)}}
-                      (:status-text @state)]
-                     (create-ns-acl-gui state props this))
-                   ])}])
+       :content  (react/create-element [comps/OKCancelForm
+                 {:dismiss-self (:dismiss-self props)
+                  :header "Namespace Permissions"
+                  :content
+
+                   [:div {}
+                              (when (:blocking-text @state)
+                                [comps/Blocker {:banner (:blocking-text @state)}])
+                              [comps/XButton {:dismiss (:dismiss-self props)}]
+                              (if
+                                (and
+                                  (== (count (:methods-ns-list props)) 0)
+                                  (== (count (:configs-ns-list props)) 0))
+                                [:div {} "There are no namespaces!"]
+                                [:div {}
+                                 "Setting Namespace permissions for: "
+                                 (cond (and
+                                         (> (count (:methods-ns-list props)) 0)
+                                         (> (count (:configs-ns-list props)) 0))
+                                       [:div {}
+                                        [:input {:onClick #(swap! state assoc
+                                                            :selected-type "methods"
+                                                            :selected-ns-list (:methods-ns-list props))
+                                             :checked (== 0 (compare "methods" (:selected-type @state)))
+                                             :class "ns-perms" :type "radio"} "Methods"]
+                                        [:input {:checked (== 0 (compare "configs" (:selected-type @state)))
+                                                 :onClick #(swap! state assoc
+                                                            :selected-type "configs"
+                                                            :selected-ns-list (:configs-ns-list props))
+                                             :class "ns-perms" :type "radio"} "Configurations"]]
+                                       (> (count (:methods-ns-list props)) 0) "Methods"
+                                       (> (count (:configs-ns-list props)) 0) "Configurations")])
+                              [:br]
+                              "Select a Namespace: "
+                              (style/create-select
+                                {:onChange (fn [e]
+                                             (let [index (int (-> e .-target .-value))
+                                                   selected-ns-str (nth (:selected-ns-list @state) index)]
+                                               (swap! state assoc :selected-ns selected-ns-str)
+                                               (react/call :load-in-acl this)))
+                                 :defaultValue (:selected-ns @state)}
+                                (:selected-ns-list @state))
+                              (if (:status-text @state)
+                                [:div {:style {:color (:exception-red style/colors)}}
+                                 (:status-text @state)]
+                                (create-ns-acl-gui state props this))
+                              ]
+
+
+                  :show-cancel? true
+                  :ok-button [comps/Button {:text "Save"
+                                            :onClick (fn []
+                                                       (let [ui-state (react/call :capture-ui-state this)]
+                                                         (utils/rlog (str "the captured state is " ui-state))
+                                                         )
+
+
+                                                       )
+
+
+                                                       }
+
+                              ]
+
+
+                  }
+
+                 ])
+
+
+
+       }])
    :capture-ui-state
    (fn [{:keys [state refs]}]
      (mapv
        (fn [i]
+         (utils/rlog (str "i = " i))
          {:user (-> (@refs (str "acl-key" i)) .getDOMNode .-value trim)
           :role (nth access-levels (int (-> (@refs (str "acl-value" i)) .getDOMNode .-value)))})
        (range (count (:acl-vec @state)))))})
