@@ -1,9 +1,11 @@
 (ns org.broadinstitute.firecloud-ui.utils
   (:require-macros
-   [org.broadinstitute.firecloud-ui.utils :refer [log jslog cljslog pause]])
+   [org.broadinstitute.firecloud-ui.utils :refer [log jslog cljslog pause]]
+   [devcards.core :refer [defcard]])
   (:require
    cljs.pprint
    [clojure.string :refer [join lower-case split]]
+   [dmohs.react :as react]
    ))
 
 
@@ -75,6 +77,11 @@
 
 (def access-token (atom nil))
 
+(defcard access-token
+  (react/create-element
+   [:input {:value @access-token :onChange #(reset! access-token (.. % -target -value))
+            :style {:width "50ex"}}]))
+
 (defn delete-access-token-cookie []
   (.remove goog.net.cookies "FCtoken"))
 
@@ -93,7 +100,8 @@
         headers (:headers arg-map)
         data (:data arg-map)
         with-credentials? (:with-credentials? arg-map)
-        canned-response-params (when-not @use-live-data? (:canned-response arg-map))]
+        use-canned-response? (get arg-map :use-canned-response? (not @use-live-data?))
+        canned-response-params (when use-canned-response? (:canned-response arg-map))]
     (assert url (str "Missing url parameter: " arg-map))
     (assert on-done (str "Missing on-done callback: " arg-map))
     (let [xhr (if-not canned-response-params
@@ -168,6 +176,7 @@
 
 (defn ajax-orch [path arg-map & {:keys [service-prefix] :or {service-prefix "/service/api"}}]
   (assert (= (subs path 0 1) "/") (str "Path must start with '/': " path))
+  (assert (or (:use-canned-response? arg-map) @access-token) "Missing access token.")
   (ajax (assoc
          arg-map :url (str service-prefix path)
          :headers (merge {"Authorization" (str "Bearer " @access-token)}

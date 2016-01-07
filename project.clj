@@ -1,39 +1,38 @@
-(def root-ns "org.broadinstitute")
-(def build-dir-relative "target")
-(def server-name (or (System/getenv "SERVER_NAME")
-                     (throw (Exception. "SERVER_NAME is not defined"))))
+(defn- with-ns [n] (str "org.broadinstitute.firecloud-ui." n))
 
 
 (defproject org.broadinstitute/firecloud-ui "0.0.1"
   :dependencies
   [
-   [binaryage/devtools "0.4.1"]
-   [dmohs/react "0.2.10"]
+   [dmohs/react "0.2.11"]
    [org.clojure/clojure "1.7.0"]
    [org.clojure/clojurescript "1.7.48"]
    [inflections "0.9.14"]
    [cljsjs/moment "2.9.0-3"]
    ]
-  :plugins [[lein-cljsbuild "1.0.6"] [lein-figwheel "0.3.7"]]
-  :hooks [leiningen.cljsbuild]
-  :profiles {:dev {:cljsbuild
-                   {:builds {:client {:compiler
+  :plugins [[lein-cljsbuild "1.0.6"] [lein-figwheel "0.3.7"] [lein-resource "15.10.2"]]
+  :profiles {:dev {:dependencies [[binaryage/devtools "0.4.1"] [devcards "0.2.1-2"]]
+                   :cljsbuild
+                   {:builds {:client {:source-paths ["src/cljsdev"]
+                                      :compiler
                                       {:optimizations :none
                                        :source-map true
-                                       :source-map-timestamp true}
-                                      :figwheel
-                                      {:on-jsload ~(str root-ns
-                                                        ".firecloud-ui.main/dev-reload")
-                                       :websocket-url ~(str "ws://" server-name
-                                                            ":3449/figwheel-ws")}}}}}
-             :minimized {:cljsbuild
-                         {:builds {:client {:compiler
-                                            {;; As of 10/29/15, advanced optimization triggers
-                                             ;; infinite recursion, which I was not able to figure
-                                             ;; out.
-                                             :optimizations :simple
-                                             :pretty-print false
-                                             :closure-defines {"goog.DEBUG" false}}}}}}}
+                                       :source-map-timestamp true}}}}}
+             :figwheel {:cljsbuild
+                        {:builds {:client {:source-paths ["src/cljsfigwheel"]
+                                           :compiler {:main ~(with-ns "figwheel")}
+                                           :figwheel {}}}}}
+             :devcards {:cljsbuild
+                        {:builds {:client {:compiler {:main ~(with-ns "devcards")}
+                                           :figwheel {:devcards true}}}}}
+             :deploy {:cljsbuild
+                      {:builds {:client {:source-paths ["src/cljsprod"]
+                                         :compiler
+                                         {:main ~(with-ns "main")
+                                          :optimizations :advanced
+                                          :pretty-print false}}}}}}
   :cljsbuild {:builds {:client {:source-paths ["src/cljs"]
-                                :compiler {:output-dir ~(str build-dir-relative "/build")
-                                           :output-to ~(str build-dir-relative "/compiled.js")}}}})
+                                :compiler {:output-dir "target/build"
+                                           :asset-path "build"
+                                           :output-to "target/compiled.js"}}}}
+  :resource {:resource-paths ["src/static"] :skip-stencil [#".*"]})
